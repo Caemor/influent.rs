@@ -1,9 +1,14 @@
 extern crate hyper;
+extern crate hyper_native_tls;
 
 use self::hyper::Client as HyperClient;
 use self::hyper::method::Method as HyperMethod;
 use self::hyper::Url;
 use self::hyper::header::{Headers, Authorization, Basic};
+
+use hyper::net::HttpsConnector;
+use hyper_native_tls::NativeTlsClient;
+
 
 use super::{Request, Response, Method, HurlResult};
 use std::io::Read;
@@ -21,7 +26,9 @@ impl HyperHurl {
 
 impl Hurl for HyperHurl {
     fn request(&self, req: Request) -> HurlResult {
-        let client = HyperClient::new();
+        let ssl = NativeTlsClient::new().unwrap();
+        let connector = HttpsConnector::new(ssl);
+        let client = HyperClient::with_connector(connector);
 
         // map request method to the hyper's
         let method = match req.method {
