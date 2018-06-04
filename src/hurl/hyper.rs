@@ -6,8 +6,8 @@ use self::hyper::method::Method as HyperMethod;
 use self::hyper::Url;
 use self::hyper::header::{Headers, Authorization, Basic};
 
-use hyper::net::HttpsConnector;
-use hyper_native_tls::NativeTlsClient;
+use self::hyper::net::HttpsConnector;
+use self::hyper_native_tls::NativeTlsClient;
 
 
 use super::{Request, Response, Method, HurlResult};
