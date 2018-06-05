@@ -1,9 +1,8 @@
-extern crate hyper;
+extern crate reqwest;
 
-use self::hyper::Client as HyperClient;
-use self::hyper::method::Method as HyperMethod;
-use self::hyper::Url;
-use self::hyper::header::{Headers, Authorization, Basic};
+use hurl::reqwest::reqwest::header::Basic;
+use hurl::reqwest::reqwest::header::Authorization;
+
 
 use super::{Request, Response, Method, HurlResult};
 use std::io::Read;
@@ -11,33 +10,36 @@ use std::io::Read;
 use super::Hurl;
 
 #[derive(Default)]
-pub struct HyperHurl;
+pub struct ReqwestHurl;
 
-impl HyperHurl {
-    pub fn new() -> HyperHurl {
-        HyperHurl::default()
+impl ReqwestHurl {
+    pub fn new() -> ReqwestHurl {
+        ReqwestHurl::default()
     }
 }
 
-impl Hurl for HyperHurl {
-    fn request(&self, req: Request) -> HurlResult {
-        let client = HyperClient::new();
+impl Hurl for ReqwestHurl {
+    fn request(&self, req: Request) -> HurlResult {      
+
+        
 
         // map request method to the hyper's
         let method = match req.method {
-            Method::POST => HyperMethod::Post,
-            Method::GET  => HyperMethod::Get
+            Method::POST => self::reqwest::Method::Post,
+            Method::GET  => self::reqwest::Method::Get
         };
 
-        let mut headers = Headers::new();
+        
 
-        let mut url = match Url::parse(req.url) {
+        let mut url = match self::reqwest::Url::parse(req.url) {
             Ok(u) => { u }
             Err(e) => {
                 return Err(format!("could not parse url: {:?}", e));
             }
         };
 
+
+        let mut headers = self::reqwest::header::Headers::new();
         // if request need to be authorized
         if let Some(auth) = req.auth {
             headers.set(
@@ -49,6 +51,14 @@ impl Hurl for HyperHurl {
                )
             );
         }
+
+        let req_client = self::reqwest::Client::builder()
+            .danger_disable_hostname_verification()
+            .build()
+            .expect("Client builder failed"); //TODO fix for valid certificates, but this is needed for self signed ones
+
+
+
 
         // if request has query
         if let Some(ref query) = req.query {
@@ -73,17 +83,21 @@ impl Hurl for HyperHurl {
                 pairs.iter().map(|&(k, v)| { (&k[..], &v[..]) })
             );
         }
+            
+
 
         // create query
-        let mut query = client.request(method, url).headers(headers);
+        let mut query = req_client.request(method, url);
+        
+        query.headers(headers);
 
         // if request has body
-        query = match req.body {
+        match req.body {
             Some(ref body) => {
-                query.body(body)
+                query.body(body.clone().to_string());
             }
-            None => { query }
-        };
+            None => { }
+        }
 
         // go!
         match query.send() {
@@ -92,7 +106,7 @@ impl Hurl for HyperHurl {
                 resp.read_to_string(&mut body).unwrap();
 
                 Ok(Response {
-                    status: resp.status.to_u16(),
+                    status: resp.status().as_u16(),
                     body: body
                 })
             }

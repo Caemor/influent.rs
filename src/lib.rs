@@ -1,15 +1,17 @@
 pub mod client;
-#[cfg(feature = "http")]
+#[cfg(any(feature = "http", feature = "https"))]
 pub mod hurl;
 pub mod serializer;
 pub mod measurement;
 
 use client::Credentials;
 use client::udp::UdpClient;
-#[cfg(feature = "http")]
+#[cfg(any(feature = "http", feature = "https"))]
 use client::http::HttpClient;
 #[cfg(feature = "http")]
 use hurl::hyper::HyperHurl;
+#[cfg(feature = "https")]
+use hurl::reqwest::ReqwestHurl;
 use serializer::line::LineSerializer;
 
 /// Simple factory of `HttpClient` with `LineSerializer`
@@ -34,6 +36,18 @@ use serializer::line::LineSerializer;
 #[cfg(feature = "http")]
 pub fn create_client<'a>(credentials: Credentials<'a>, hosts: Vec<&'a str>) -> HttpClient<'a> {
     let mut client = HttpClient::new(credentials, Box::new(LineSerializer::new()), Box::new(HyperHurl::new()));
+
+    for host in hosts {
+        client.add_host(host);
+    }
+
+    client
+}
+
+
+#[cfg(feature = "https")]
+pub fn create_secure_client<'a>(credentials: Credentials<'a>, hosts: Vec<&'a str>) -> HttpClient<'a> {
+    let mut client = HttpClient::new(credentials, Box::new(LineSerializer::new()), Box::new(ReqwestHurl::new()));
 
     for host in hosts {
         client.add_host(host);

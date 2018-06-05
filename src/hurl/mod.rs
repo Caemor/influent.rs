@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
+#[cfg(feature = "http")]
 pub mod hyper;
+#[cfg(feature = "https")]
+pub mod reqwest;
 
 pub trait Hurl {
     fn request(&self, Request) -> HurlResult;

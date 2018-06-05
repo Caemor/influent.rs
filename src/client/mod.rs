@@ -1,7 +1,7 @@
 use ::measurement::Measurement;
 use std::io;
 
-#[cfg(feature = "http")]
+#[cfg(any(feature = "http", feature = "https"))]
 pub mod http;
 pub mod udp;
 
