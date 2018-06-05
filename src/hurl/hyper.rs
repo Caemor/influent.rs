@@ -1,3 +1,4 @@
+
 extern crate hyper;
 extern crate hyper_native_tls;
 
@@ -26,9 +27,12 @@ impl HyperHurl {
 
 impl Hurl for HyperHurl {
     fn request(&self, req: Request) -> HurlResult {
-        let ssl = NativeTlsClient::new().unwrap();
-        let connector = HttpsConnector::new(ssl);
-        let client = HyperClient::with_connector(connector);
+        let mut core = tokio_core::reactor::Core::new().unwrap();
+        let handle = core.handle();
+        let https = hyper_tls::HttpsConnector::new(4, &handle).expect("https");
+
+        let client = HyperClient::configure()
+            .connector(https).build(&handle);
 
         // map request method to the hyper's
         let method = match req.method {
