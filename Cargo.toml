@@ -12,9 +12,8 @@ license = "MIT"
 
 [features]
 default = ["http"]
-http = ["hyper"]
+http = ["reqwest"]
 
 [dependencies]
-hyper = { version = "^0.10.0", optional = true }
-hyper-native-tls = "0.2.4"
+reqwest = { version = "0.8.6", optional = true }
 
